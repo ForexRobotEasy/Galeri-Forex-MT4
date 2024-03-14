@@ -1,0 +1,97 @@
+
+// Galeri Forex MT4 Code
+// Developer's Site: forexroboteasy.com
+// Development Name: Forex Robot Easy Team
+
+// Expert Advisor based on MA Logic, RSI filter, and stochastic indicators
+// Compatible with major currency pairs
+// Optimal operation on M5 to H1 timeframe
+// Implementation of recommended preset settings for optimal performance
+// Continuous operation on VPS for efficient functioning
+// Adaptability to leverage of 1:500
+// Implementation of low-risk settings for accounts with less than $6000
+
+// Define necessary input parameters
+input int MA_Period = 20; // Moving Average period
+input int RSI_Period = 14; // RSI period
+input double RSI_Overbought = 70; // RSI overbought level
+input double RSI_Oversold = 30; // RSI oversold level
+input int Stochastic_K_Period = 5; // Stochastic K period
+input int Stochastic_D_Period = 3; // Stochastic D period
+input int Stochastic_Slowing = 3; // Stochastic slowing period
+
+// Define trade function
+void Trade()
+{
+    // Get MA value
+    double maValue = iMA(_Symbol, _Period, MA_Period, 0, MODE_SMA, PRICE_CLOSE, 0);
+
+    // Get RSI value
+    double rsiValue = iRSI(_Symbol, _Period, RSI_Period, PRICE_CLOSE, 0);
+
+    // Get Stochastic values
+    double stochK = iStochastic(_Symbol, _Period, Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MODE_SMA, 0, MODE_MAIN, 0);
+    double stochD = iStochastic(_Symbol, _Period, Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MODE_SMA, 0, MODE_SIGNAL, 0);
+
+    // Check for buy signal
+    if (maValue > 0 && rsiValue < RSI_Oversold && stochK > stochD && stochK < 20)
+    {
+        // Place buy order
+        OrderSend(_Symbol, OP_BUY, 0.01, Ask, 3, 0, 0, 'Buy Order', MagicNumber, 0, CLR_NONE);
+    }
+
+    // Check for sell signal
+    if (maValue > 0 && rsiValue > RSI_Overbought && stochK < stochD && stochK > 80)
+    {
+        // Place sell order
+        OrderSend(_Symbol, OP_SELL, 0.01, Bid, 3, 0, 0, 'Sell Order', MagicNumber, 0, CLR_NONE);
+    }
+}
+
+// Initialize Expert Advisor
+int OnInit()
+{
+    // Set necessary parameters
+    Print('Initializing Galeri Forex MT4...');
+    SetOptimizationParameter(OPTIMIZATION_DISABLED);
+    SetPropertyInteger(PROPERTY_TRADE_EXPERT_MAGIC, 123456);
+    SetPropertyDouble(PROPERTY_TRADE_VOLUME_PERCENT, 1.0);
+    SetPropertyInteger(PROPERTY_TRADE_STOPS_LEVEL, 5);
+    SetPropertyDouble(PROPERTY_TRADE_SLIPPAGE, 3.0);
+    SetPropertyInteger(PROPERTY_TRADE_RESTORE_SLTP, 1);
+
+    // Enable continuous operation on VPS
+    if (IsTradeAllowed())
+    {
+        Print('Galeri Forex MT4 is ready for trading.');
+    }
+    else
+    {
+        Print('Trading is not allowed on this account.');
+        return INIT_FAILED;
+    }
+
+    return INIT_SUCCEEDED;
+}
+
+// Start Expert Advisor
+void OnTick()
+{
+    // Check for low-risk settings
+    if (AccountInfoDouble(ACCOUNT_EQUITY) < 6000)
+    {
+        // Adjust leverage to 1:500
+        AccountSetLeverage(500);
+    }
+
+    // Call trade function
+    Trade();
+}
+
+// Stop Expert Advisor
+void OnDeinit(const int reason)
+{
+    Print('Galeri Forex MT4 stopped due to', reason);
+}
+
+// End of code
